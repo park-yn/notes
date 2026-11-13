@@ -6,8 +6,10 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <input id="search" list="index" placeholder="Search">
-  <datalist id="index"></datalist>
+  <div id="find">
+    <input id="search" type="search" placeholder="Search" autocomplete="off" spellcheck="false">
+    <div id="results"></div>
+  </div>
   <div id="network" style="width: 100vw; height: 100vh;"></div>
   <script src="graph.js"></script>
 </body>
