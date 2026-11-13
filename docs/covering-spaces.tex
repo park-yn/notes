@@ -1,0 +1,15 @@
+\smalldoc{Covering spaces}{Cov}
+\uses{FundGrp}
+\assumes{point-set topology}
+\status{draft}
+
+\begin{definition}
+A continuous surjection $p\colon \tilde X \to X$ is a \emph{covering map} if every
+$x\in X$ has an open neighbourhood $U$ such that $p^{-1}(U)$ is a disjoint union of
+open sets, each mapped homeomorphically onto $U$ by $p$.
+\end{definition}
+
+For connected $X$ the number of sheets $|p^{-1}(x)|$ is independent of $x$:
+\begin{equation}\label{eq:sheets}
+  n = |p^{-1}(x)| \quad \text{for all } x \in X.
+\end{equation}
