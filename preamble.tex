@@ -1,5 +1,6 @@
 % =====================================================================
 %  preamble.tex — shared by desk.tex, book.tex and every web PDF.
+%  THIS is the file to edit to change how everything looks.
 %  Put all your packages and macros here, once.
 % =====================================================================
 \usepackage[utf8]{inputenc}
@@ -12,6 +13,7 @@
 
 % ---- mode switch: book.tex says \booktrue, everything else is standalone
 \newif\ifbook
+
 
 % ---- theorem-type environments, all sharing one counter
 \theoremstyle{plain}
@@ -48,7 +50,7 @@
 
 % ---- link to another document by tag
 \newcommand{\docref}[1]{%
-  \ifbook\hyperref[doc:#1]{\textsf{#1}}\else\href{#1.pdf}{\textsf{#1}}\fi}
+  \ifbook\hyperref[doc:#1]{\textsf{#1}}\else\csname hyper@linkurl\endcsname{\textsf{#1}}{#1.pdf}\fi}
 
 % ---------------------------------------------------------------------
 %  \uses{Tag1, Tag2}   — DIRECT dependencies only. These become the
@@ -66,6 +68,10 @@
   \par\noindent{\small\textbf{Assumes:} #1}\par}
 \newcommand{\status}[1]{%
   \par\noindent{\small\textbf{Status:} \emph{#1}}\par\medskip}
+
+% ---- \near{Tag}: where a NEW node first appears on the web (next to Tag).
+%      Only affects placement; draws no line. Prints nothing.
+\newcommand{\near}[1]{}
 
 % ---- book spine chapters: unnumbered, still in the table of contents
 \newcommand{\spine}[1]{\chapter*{#1}\addcontentsline{toc}{chapter}{#1}\markboth{#1}{#1}}
