@@ -1,0 +1,10 @@
+build/
+web/pdf/
+web/graph.json
+*.aux
+*.log
+*.fls
+*.fdb_latexmk
+*.out
+*.toc
+*.synctex.gz

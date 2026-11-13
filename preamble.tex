@@ -1,0 +1,73 @@
+% =====================================================================
+%  preamble.tex — shared by desk.tex, book.tex and every web PDF.
+%  Put all your packages and macros here, once.
+% =====================================================================
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{mathtools}
+\usepackage{etoolbox}
+\usepackage[margin=1in]{geometry}
+\usepackage[hidelinks]{hyperref}
+
+% ---- mode switch: book.tex says \booktrue, everything else is standalone
+\newif\ifbook
+
+% ---- theorem-type environments, all sharing one counter
+\theoremstyle{plain}
+\newtheorem{theorem}{Theorem}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{corollary}[theorem]{Corollary}
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{example}[theorem]{Example}
+\theoremstyle{remark}
+\newtheorem{remark}[theorem]{Remark}
+
+% ---- position-independent numbering: (Cov.3), Theorem Cov.2, ...
+\newcommand{\doctag}{}
+\renewcommand{\theequation}{\doctag.\arabic{equation}}
+\renewcommand{\thetheorem}{\doctag.\arabic{theorem}}
+\renewcommand{\theHequation}{\doctag.\arabic{equation}}
+\renewcommand{\theHtheorem}{\doctag.\arabic{theorem}}
+
+% ---------------------------------------------------------------------
+%  \smalldoc{Title}{Tag}   — first line of every document.
+%  Tag is short and unique (e.g. Cov, Mod, SUSY). It is the document's
+%  name everywhere: equation numbers, \uses, the PDF file, the web node.
+% ---------------------------------------------------------------------
+\newcommand{\smalldoc}[2]{%
+  \ifbook\clearpage\fi
+  \section*{#1}\phantomsection\ifbook\markright{#1}\fi
+  \addcontentsline{toc}{section}{#1}%
+  \label{doc:#2}%
+  \renewcommand{\doctag}{#2}%
+  \setcounter{equation}{0}\setcounter{theorem}{0}%
+}
+
+% ---- link to another document by tag
+\newcommand{\docref}[1]{%
+  \ifbook\hyperref[doc:#1]{\textsf{#1}}\else\href{#1.pdf}{\textsf{#1}}\fi}
+
+% ---------------------------------------------------------------------
+%  \uses{Tag1, Tag2}   — DIRECT dependencies only. These become the
+%                        edges of the web. Unwritten tags show as grey
+%                        "ghost" nodes.
+%  \assumes{free text} — background you assume but don't link
+%                        (e.g. "standard: Riemann--Roch"). No edge.
+%  \status{draft|solid|checked} — optional; drafts are faded on the web.
+% ---------------------------------------------------------------------
+\newif\ifusesfirst
+\newcommand{\usesitem}[1]{\ifusesfirst\usesfirstfalse\else, \fi\docref{#1}}
+\newcommand{\uses}[1]{%
+  \par\noindent{\small\textbf{Uses:} \usesfirsttrue\forcsvlist{\usesitem}{#1}}\par}
+\newcommand{\assumes}[1]{%
+  \par\noindent{\small\textbf{Assumes:} #1}\par}
+\newcommand{\status}[1]{%
+  \par\noindent{\small\textbf{Status:} \emph{#1}}\par\medskip}
+
+% ---- book spine chapters: unnumbered, still in the table of contents
+\newcommand{\spine}[1]{\chapter*{#1}\addcontentsline{toc}{chapter}{#1}\markboth{#1}{#1}}
+
+% ---- your own macros below ------------------------------------------

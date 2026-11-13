@@ -1,0 +1,20 @@
+% =====================================================================
+%  book.tex — the spine. Contains ONLY order and short bridges.
+%  To put a document in the book: add one \input line. To move it: move the line.
+% =====================================================================
+\documentclass[11pt,openany]{book}
+\input{preamble}
+\booktrue
+\title{Physics Web}
+\author{Phillip Todd}
+\begin{document}
+\maketitle
+\tableofcontents
+
+\spine{Riemann surfaces}
+Bridge: a paragraph on why this chapter is here and what it assumes.
+
+\input{docs/covering-spaces}
+\input{docs/branched-covers}
+
+\end{document}
