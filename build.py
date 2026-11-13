@@ -93,8 +93,9 @@ def read_docs():
         title, tag = head
         uses = braced_args(tex, "uses", 1)
         status = braced_args(tex, "status", 1)
+        near = braced_args(tex, "near", 1)
         body = tex
-        for cmd, n in (("smalldoc", 2), ("uses", 1), ("assumes", 1), ("status", 1)):
+        for cmd, n in (("smalldoc", 2), ("uses", 1), ("assumes", 1), ("status", 1), ("near", 1)):
             body = remove_command(body, cmd, n)
         docs.append({
             "unwritten": not body.strip(),
@@ -103,6 +104,7 @@ def read_docs():
             "tag": tag,
             "uses": [u.strip() for u in uses[0].split(",") if u.strip()] if uses else [],
             "status": status[0] if status else "",
+            "near": near[0].strip() if near else "",
         })
     seen = {}
     for d in docs:
@@ -156,7 +158,7 @@ def main():
 
     tags = {d["tag"] for d in docs}
     nodes = [{
-        "id": d["tag"], "label": d["title"], "status": d["status"],
+        "id": d["tag"], "label": d["title"], "status": d["status"], "near": d["near"],
         "url": None if d["unwritten"] else f"pdf/{d['tag']}.pdf",
         "ghost": d["unwritten"], "failed": d["tag"] in failed,
     } for d in docs]
@@ -164,8 +166,9 @@ def main():
     for g in ghosts:
         problems.append(f"{g} is used but has no file; add docs/<name>.tex with just "
                         f"\\smalldoc{{Its name}}{{{g}}} to give it a name")
-    nodes += [{"id": g, "label": g, "status": "", "url": None, "ghost": True, "failed": False}
-              for g in ghosts]
+    nodes += [{"id": g, "label": g, "status": "", "near": "", "url": None, "ghost": True,
+               "failed": False} for g in ghosts]
+    nodes.sort(key=lambda n: n["id"])
     edges = [{"from": u, "to": d["tag"]} for d in docs for u in d["uses"]]
 
     (WEB / "graph.json").write_text(json.dumps({"nodes": nodes, "edges": edges}, indent=1),
