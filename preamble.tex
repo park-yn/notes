@@ -1,79 +1,524 @@
-% =====================================================================
-%  preamble.tex — shared by desk.tex, book.tex and every web PDF.
-%  THIS is the file to edit to change how everything looks.
-%  Put all your packages and macros here, once.
-% =====================================================================
-\usepackage[utf8]{inputenc}
-\usepackage[T1]{fontenc}
-\usepackage{amsmath,amssymb,amsthm}
-\usepackage{mathtools}
-\usepackage{etoolbox}
-\usepackage[margin=1in]{geometry}
-\usepackage[hidelinks]{hyperref}
+% ============================================================
+% PREAMBLE  --  shared by desk.tex, book.tex and every web PDF.
+% This is the file to edit to change how everything looks.
+% Compile with XeLaTeX (Overleaf: Menu > Compiler > XeLaTeX).
+% ============================================================
 
-% ---- mode switch: book.tex says \booktrue, everything else is standalone
+
+% ============================================================
+% FONTS
+% ============================================================
+
+\usepackage{fontspec}
+% CMU Serif if available, otherwise FreeSerif.
+\IfFontExistsTF{cmunrm.otf}{%
+  \setmainfont{cmunrm.otf}[
+    BoldFont=cmunbx.otf,
+    ItalicFont=cmunti.otf,
+    BoldItalicFont=cmunbi.otf
+  ]%
+}{%
+  \setmainfont{FreeSerif}%
+}
+
+
+% ============================================================
+% PAGE
+% ============================================================
+
+\usepackage{geometry}
+% \pageshift moves the header and the text down together.
+\newlength{\pageshift}
+\setlength{\pageshift}{7.5pt}
+
+\geometry{
+  left=0.9in,
+  right=1in,
+  bottom=1in,
+  top=\dimexpr 2cm+\pageshift\relax,
+  headheight=20pt,
+  headsep=15pt
+}
+
+\renewcommand{\baselinestretch}{1.145}
+\setlength{\parindent}{20pt}
+\setlength{\parskip}{0.55\baselineskip}
+
+\clubpenalty=10000
+\widowpenalty=10000
+\displaywidowpenalty=10000
+
+
+% ============================================================
+% MATHEMATICS
+% ============================================================
+
+\usepackage{amssymb,amsfonts,amsmath,amsthm}
+\usepackage{mathtools}
+\usepackage{mathrsfs}
+\usepackage[mathscr]{euscript}
+\usepackage{bm}
+\usepackage{bbm}
+\usepackage{tensor}
+\usepackage{slashed}
+\usepackage{braket}
+
+\AtBeginDocument{\let\hbar\hslash}
+
+
+% ============================================================
+% GENERAL PACKAGES
+% ============================================================
+
+\usepackage{graphicx}
+\usepackage{microtype}
+\usepackage[shortlabels]{enumitem}   % also accepts \begin{enumerate}[(a)]
+\usepackage{changepage}
+\usepackage{xparse}
+\usepackage{etoolbox}
+\usepackage{comment}
+\usepackage[explicit]{titlesec}
+\usepackage{titletoc}
+\usepackage{multicol}
+\usepackage[most]{tcolorbox}
+\usepackage{caption}
+\usepackage{ragged2e}
+\usepackage{fancyhdr}
+
+\usepackage[dvipsnames]{xcolor}
+\definecolor{linkblue}{RGB}{28,86,140}
+
+\usepackage[
+  colorlinks=true,
+  urlcolor=linkblue,
+  citecolor=linkblue,
+  linkcolor=linkblue,
+  filecolor=linkblue,
+  linktocpage=true
+]{hyperref}
+
+\usepackage{nameref}
+\usepackage{cleveref}
+
+
+% ============================================================
+% MODE SWITCH
+% book.tex says \booktrue; everything else is a standalone document.
+% ============================================================
+
 \newif\ifbook
 
 
-% ---- theorem-type environments, all sharing one counter
-\theoremstyle{plain}
-\newtheorem{theorem}{Theorem}
-\newtheorem{proposition}[theorem]{Proposition}
-\newtheorem{lemma}[theorem]{Lemma}
-\newtheorem{corollary}[theorem]{Corollary}
-\theoremstyle{definition}
-\newtheorem{definition}[theorem]{Definition}
-\newtheorem{example}[theorem]{Example}
-\theoremstyle{remark}
-\newtheorem{remark}[theorem]{Remark}
+% ============================================================
+% HEADINGS
+%
+% \section and \subsection keep their numbered format. In small
+% documents write \section*{...} and \subsection*{...}; remove the
+% stars later (in a big document) and they take on numbers.
+% ============================================================
 
-% ---- position-independent numbering: (Cov.3), Theorem Cov.2, ...
-\newcommand{\doctag}{}
-\renewcommand{\theequation}{\doctag.\arabic{equation}}
-\renewcommand{\thetheorem}{\doctag.\arabic{theorem}}
-\renewcommand{\theHequation}{\doctag.\arabic{equation}}
-\renewcommand{\theHtheorem}{\doctag.\arabic{theorem}}
+% Header sizes:
+%   \sectionsizefactor       section size = factor x \Large
+%   \subsectionsizefraction  subsection size, as a fraction of the
+%                            way from \normalsize (0) to \large (1)
+\newcommand{\sectionsizefactor}{0.9}
+\newcommand{\subsectionsizefraction}{0.0}
 
-% ---------------------------------------------------------------------
-%  \smalldoc{Title}{Tag}   — first line of every document.
-%  Tag is short and unique (e.g. Cov, Mod, SUSY). It is the document's
-%  name everywhere: equation numbers, \uses, the PDF file, the web node.
-% ---------------------------------------------------------------------
-\newcommand{\smalldoc}[2]{%
-  \ifbook\clearpage\fi
-  \section*{#1}\phantomsection\ifbook\markright{#1}\fi
-  \addcontentsline{toc}{section}{#1}%
-  \label{doc:#2}%
-  \renewcommand{\doctag}{#2}%
-  \setcounter{equation}{0}\setcounter{theorem}{0}%
+\makeatletter
+\newcommand{\notes@sizeof}[2]{\begingroup#2\xdef#1{\f@size}\endgroup}
+\newcommand{\notes@setsize}[1]{%
+  \fontsize{#1}{\dimexpr 1.3\dimexpr #1\relax\relax}\selectfont
+}
+\newcommand{\sectionfont}{%
+  \notes@sizeof\notes@L{\Large}%
+  \notes@setsize{\dimexpr \sectionsizefactor\dimexpr \notes@L pt\relax\relax}%
+}
+\newcommand{\subsectionfont}{%
+  \notes@sizeof\notes@n{\normalsize}%
+  \notes@sizeof\notes@l{\large}%
+  \notes@setsize{\dimexpr \notes@n pt
+    + \subsectionsizefraction\dimexpr \notes@l pt - \notes@n pt\relax\relax}%
+}
+\makeatother
+
+\newcommand{\sectionnumberbox}{\thesection\hspace{1em}}
+
+\titleformat{\section}[hang]
+  {\sectionfont\bfseries}
+  {\sectionnumberbox}
+  {0pt}
+  {#1}
+
+\titleformat{\subsection}[hang]
+  {\normalfont\subsectionfont\bfseries}
+  {\thesubsection\hspace{1em}}
+  {0pt}
+  {#1}
+\titlespacing*{\subsection}{0pt}{0.65\baselineskip}{0.15\baselineskip}
+
+\makeatletter
+\newif\ifnotes@firstpara
+\notes@firstparafalse
+
+\let\originalsection\section
+\RenewDocumentCommand{\section}{s o m}{%
+  \closestatement
+  \IfBooleanTF{#1}{%
+    \originalsection*{#3}%
+  }{%
+    \IfNoValueTF{#2}{\originalsection{#3}}{\originalsection[#2]{#3}}%
+  }%
+  \global\notes@firstparatrue
 }
 
-% ---- link to another document by tag
+\let\originalsubsection\subsection
+\RenewDocumentCommand{\subsection}{s o m}{%
+  \closestatement
+  \IfBooleanTF{#1}{%
+    \originalsubsection*{#3}%
+  }{%
+    \IfNoValueTF{#2}{\originalsubsection{#3}}{\originalsubsection[#2]{#3}}%
+  }%
+  \global\notes@firstparatrue
+}
+\makeatother
+
+
+% ============================================================
+% DOCUMENTS
+%
+%   \smalldoc{Title}{Tag}  first line of every document. Prints the title
+%                          like \section*{Title} (in the book: a numbered
+%                          \section). The tag (Cov, Mod, SUSY) names the
+%                          document for the web and for \docref.
+%   \uses{Tag1, Tag2}      lines on the web (prints nothing)
+%   \near{Tag}             where a new node first appears on the web
+%                          (prints nothing)
+%   \docref{Tag}           link to another document in the text
+% ============================================================
+
+\newcommand{\doctag}{}
+
+\makeatletter
+\newcommand{\smalldoc}[2]{%
+  \closestatement
+  \renewcommand{\doctag}{#2}%
+  \ifbook\section{#1}\else\section*{#1}\fi
+  \phantomsection\label{doc:#2}%
+  \setcounter{equation}{0}\setcounter{statement}{0}%
+  \global\notes@firstparatrue
+}
+\makeatother
+
 \newcommand{\docref}[1]{%
-  \ifbook\hyperref[doc:#1]{\textsf{#1}}\else\csname hyper@linkurl\endcsname{\textsf{#1}}{#1.pdf}\fi}
+  \ifbook\hyperref[doc:#1]{\textsf{#1}}%
+  \else\csname hyper@linkurl\endcsname{\textsf{#1}}{#1.pdf}\fi}
 
-% ---------------------------------------------------------------------
-%  \uses{Tag1, Tag2}   — DIRECT dependencies only. These become the
-%                        edges of the web. Unwritten tags show as grey
-%                        "ghost" nodes.
-%  \assumes{free text} — background you assume but don't link
-%                        (e.g. "standard: Riemann--Roch"). No edge.
-%  \status{draft|solid|checked} — optional; drafts are faded on the web.
-% ---------------------------------------------------------------------
-\newif\ifusesfirst
-\newcommand{\usesitem}[1]{\ifusesfirst\usesfirstfalse\else, \fi\docref{#1}}
-\newcommand{\uses}[1]{%
-  \par\noindent{\small\textbf{Uses:} \usesfirsttrue\forcsvlist{\usesitem}{#1}}\par}
-\newcommand{\assumes}[1]{%
-  \par\noindent{\small\textbf{Assumes:} #1}\par}
-\newcommand{\status}[1]{%
-  \par\noindent{\small\textbf{Status:} \emph{#1}}\par\medskip}
-
-% ---- \near{Tag}: where a NEW node first appears on the web (next to Tag).
-%      Only affects placement; draws no line. Prints nothing.
+% read by the web build only; they print nothing
+\newcommand{\uses}[1]{}
 \newcommand{\near}[1]{}
+\newcommand{\assumes}[1]{}
+\newcommand{\status}[1]{}
 
-% ---- book spine chapters: unnumbered, still in the table of contents
-\newcommand{\spine}[1]{\chapter*{#1}\addcontentsline{toc}{chapter}{#1}\markboth{#1}{#1}}
+% Equations: (1), (2), ... in each document; (3.1), (3.2), ... in the book.
+\renewcommand{\theequation}{\ifbook\thesection.\fi\arabic{equation}}
+\renewcommand{\theHequation}{\doctag.\arabic{equation}}
 
-% ---- your own macros below ------------------------------------------
+
+% ============================================================
+% THE BOOK  (book.tex)
+%
+%   \documentheading{TITLE}{Author \\ Date}
+%   \tableofcontents          two columns, sections only
+%   \input{docs/...}          each document becomes a numbered section
+%   \stubsection{Title}       planned section: "--" for its page in the
+%                             contents, nothing in the text
+% ============================================================
+
+\newcommand{\documentheading}[2]{%
+  \begin{center}
+    {\large\bfseries\MakeUppercase{#1}}%
+    \par\vspace{1.55\baselineskip}%
+    #2
+  \end{center}%
+  \vspace{1.55\baselineskip}%
+}
+
+\setcounter{tocdepth}{1}
+
+\newlength{\tocnumwidth}
+\settowidth{\tocnumwidth}{105\quad}
+\newcommand{\tocpagebox}[1]{\makebox[1.7em][r]{#1}}
+
+\titlecontents{section}
+  [0pt]
+  {\addvspace{0.15em}\normalfont}
+  {\makebox[\tocnumwidth][l]{\thecontentslabel}}
+  {}
+  {\normalfont\ \titlerule*[0.6pc]{.}\ \tocpagebox{\thecontentspage}}
+
+\titlecontents{stubsection}
+  [0pt]
+  {\addvspace{0.15em}\normalfont}
+  {\makebox[\tocnumwidth][l]{\thecontentslabel}}
+  {}
+  {\normalfont\ \titlerule*[0.6pc]{.}\ \tocpagebox{--}}
+
+\contentsmargin{0pt}
+
+\makeatletter
+\def\toclevel@stubsection{1}
+\renewcommand{\tableofcontents}{%
+  \begingroup
+  \small
+  \linespread{0.88}\selectfont
+  \setlength{\columnsep}{2.5em}%
+  \parindent=0pt
+  \parskip=1pt
+  \begin{multicols}{2}%
+  \raggedcolumns
+  \@starttoc{toc}%
+  \end{multicols}%
+  \endgroup
+}
+\newcommand{\stubsection}[1]{%
+  \refstepcounter{section}%
+  \addcontentsline{toc}{stubsection}{\protect\numberline{\thesection}#1}%
+}
+\makeatother
+
+
+% ============================================================
+% TEXT UNITS
+%
+%   \paragraph{Groups} Text...    ->  Groups.  Text...   bold run-in title
+%   \paragraph{} Text...          ->  plain paragraph break
+%   \paragraph{Example} Text...   ->  Example 2.  Text...  (a statement)
+%
+% Titles registered with \statementtitle give statements; every
+% other title is a bold run-in title.  Statements can also be
+% written directly, with an optional name:
+%
+%   \definition  \axiom  \proposition[path lifting]  \theorem
+%   \lemma  \corollary  \fact  \example  \remark  \exercise
+%   and their plurals (\examples, \corollaries, ...), plus \proof
+%
+% \cref{label} gives "§3.2" for a numbered section and "Proposition 3" for a statement.
+% ============================================================
+
+\newlength{\factgap}
+\setlength{\factgap}{0.7em}
+
+% One counter for all statements in a document:
+% Definition 1, Example 2, ... in each document; Definition 3.1, ... in the book.
+\newcounter{statement}
+\renewcommand{\thestatement}{\ifbook\thesection.\fi\arabic{statement}}
+\renewcommand{\theHstatement}{\doctag.\arabic{statement}}
+
+% Label style for statements.  Choose one:
+%   \statementstyle{italic}   Proposition 2 (name).  Text...
+%   \statementstyle{margin}   label small and grey in the left margin
+\newcommand{\statementstyle}[1]{\def\notesstatementstyle{#1}}
+\statementstyle{italic}
+
+% A positive \statementindent sets statements narrower on both sides.
+\newlength{\statementindent}
+\setlength{\statementindent}{0pt}
+
+\newcommand{\closestatement}{%
+  \par
+  \global\leftskip=0pt
+  \global\rightskip=0pt
+}
+\newcommand{\openstatement}{%
+  \closestatement
+  \addvspace{0.55\baselineskip}%
+  \global\leftskip=\statementindent
+  \global\rightskip=\statementindent
+}
+
+\newcommand{\marginlabelfont}{\footnotesize\color{black!55}}
+\newlength{\marginlabelsep}
+\setlength{\marginlabelsep}{9pt}
+
+% \statement[name]{Label}{Abbreviation}{cref type}
+\NewDocumentCommand{\statement}{o m m m}{%
+  \openstatement
+  \crefalias{statement}{#4}%
+  \refstepcounter{statement}%
+  \noindent
+  \ifdefstring{\notesstatementstyle}{margin}{%
+    \llap{\marginlabelfont #3~\thestatement\hspace{\marginlabelsep}}%
+    \IfValueT{#1}{{\bfseries\MakeUppercase#1.}\hspace{\factgap}}%
+  }{%
+    {\bfseries #2~\thestatement}%
+    \IfValueT{#1}{ (#1)}%
+    {\bfseries .}%
+    \hspace{\factgap}%
+  }%
+  \ignorespaces
+}
+
+% Singular and plural forms; both take an optional name.
+\NewDocumentCommand{\definition}{o}{\statement[#1]{Definition}{Def.}{definition}}
+\NewDocumentCommand{\definitions}{o}{\statement[#1]{Definitions}{Def.}{definition}}
+\NewDocumentCommand{\axiom}{o}{\statement[#1]{Axiom}{Ax.}{axiom}}
+\NewDocumentCommand{\axioms}{o}{\statement[#1]{Axioms}{Ax.}{axiom}}
+\NewDocumentCommand{\proposition}{o}{\statement[#1]{Proposition}{Prop.}{proposition}}
+\NewDocumentCommand{\propositions}{o}{\statement[#1]{Propositions}{Prop.}{proposition}}
+\NewDocumentCommand{\theorem}{o}{\statement[#1]{Theorem}{Thm.}{theorem}}
+\NewDocumentCommand{\theorems}{o}{\statement[#1]{Theorems}{Thm.}{theorem}}
+\NewDocumentCommand{\lemma}{o}{\statement[#1]{Lemma}{Lem.}{lemma}}
+\NewDocumentCommand{\lemmas}{o}{\statement[#1]{Lemmas}{Lem.}{lemma}}
+\NewDocumentCommand{\corollary}{o}{\statement[#1]{Corollary}{Cor.}{corollary}}
+\NewDocumentCommand{\corollaries}{o}{\statement[#1]{Corollaries}{Cor.}{corollary}}
+\NewDocumentCommand{\fact}{o}{\statement[#1]{Fact}{Fact}{fact}}
+\NewDocumentCommand{\facts}{o}{\statement[#1]{Facts}{Fact}{fact}}
+\NewDocumentCommand{\example}{o}{\statement[#1]{Example}{Ex.}{example}}
+\NewDocumentCommand{\examples}{o}{\statement[#1]{Examples}{Ex.}{example}}
+\NewDocumentCommand{\remark}{o}{\statement[#1]{Remark}{Rem.}{remark}}
+\NewDocumentCommand{\remarks}{o}{\statement[#1]{Remarks}{Rem.}{remark}}
+\NewDocumentCommand{\exercise}{o}{\statement[#1]{Exercise}{Exer.}{exercise}}
+\NewDocumentCommand{\exercises}{o}{\statement[#1]{Exercises}{Exer.}{exercise}}
+
+% Proofs are not numbered.
+\RenewDocumentCommand{\proof}{}{%
+  \openstatement
+  \noindent{\itshape Proof.}\hspace{\factgap}\ignorespaces
+}
+
+\makeatletter
+% If ordinary prose comes first after a heading, clear the flag when that paragraph ends.
+\AddToHook{para/end}{\global\notes@firstparafalse}
+% \statementtitle{Title}{\command}: a \paragraph{Title} produces
+% that statement instead of a bold run-in title.
+\newcommand{\statementtitle}[2]{%
+  \expandafter\def\csname notes@title@\detokenize{#1}\endcsname{#2}%
+}
+% \paragraph{Title} Text: the space after the closing brace is ignored,
+% so writing "\paragraph{Title} Text" and "\paragraph{Title}Text" look the same.
+\renewcommand{\paragraph}[1]{%
+  \closestatement
+  \let\notes@next\ignorespaces
+  \if\relax\detokenize{#1}\relax
+    % The first paragraph after a heading is flush left; others indent.
+    \ifnotes@firstpara
+      \noindent
+    \else
+      \noindent\hspace*{\parindent}%
+    \fi
+  \else
+    \ifcsname notes@title@\detokenize{#1}\endcsname
+      \expandafter\let\expandafter\notes@next\csname notes@title@\detokenize{#1}\endcsname
+    \else
+      \noindent{\bfseries #1.}\hspace{\factgap}%
+    \fi
+  \fi
+  \global\notes@firstparafalse
+  \notes@next
+}
+\makeatother
+
+% Titles of \paragraph{...} that produce a statement.
+\statementtitle{Definition}{\definition}
+\statementtitle{Definitions}{\definitions}
+\statementtitle{Axiom}{\axiom}
+\statementtitle{Axioms}{\axioms}
+\statementtitle{Proposition}{\proposition}
+\statementtitle{Propositions}{\propositions}
+\statementtitle{Theorem}{\theorem}
+\statementtitle{Theorems}{\theorems}
+\statementtitle{Lemma}{\lemma}
+\statementtitle{Lemmas}{\lemmas}
+\statementtitle{Corollary}{\corollary}
+\statementtitle{Corollaries}{\corollaries}
+\statementtitle{Fact}{\fact}
+\statementtitle{Facts}{\facts}
+\statementtitle{Example}{\example}
+\statementtitle{Examples}{\examples}
+\statementtitle{Remark}{\remark}
+\statementtitle{Remarks}{\remarks}
+\statementtitle{Exercise}{\exercise}
+\statementtitle{Exercises}{\exercises}
+\statementtitle{Proof}{\proof}
+
+\newcommand{\stars}{%
+  \closestatement
+  \addvspace{1.15\baselineskip}%
+  \begin{center}%
+    \textasteriskcentered\hspace{0.45em}%
+    \textasteriskcentered\hspace{0.45em}%
+    \textasteriskcentered\hspace{0.45em}%
+    \textasteriskcentered\hspace{0.45em}%
+    \textasteriskcentered
+  \end{center}%
+  \addvspace{1.15\baselineskip}%
+}
+
+\crefformat{section}{#2$\S$#1#3}
+\crefformat{subsection}{#2$\S$#1#3}
+\crefname{definition}{Definition}{Definitions}
+\crefname{axiom}{Axiom}{Axioms}
+\crefname{proposition}{Proposition}{Propositions}
+\crefname{theorem}{Theorem}{Theorems}
+\crefname{lemma}{Lemma}{Lemmas}
+\crefname{corollary}{Corollary}{Corollaries}
+\crefname{fact}{Fact}{Facts}
+\crefname{example}{Example}{Examples}
+\crefname{remark}{Remark}{Remarks}
+\crefname{exercise}{Exercise}{Exercises}
+
+
+% ============================================================
+% PAGE NUMBERS
+% Bottom-centered on every page; no running headers.
+% ============================================================
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyfoot[C]{$-$ \thepage\  $-$}
+\renewcommand{\headrulewidth}{0pt}
+\renewcommand{\footrulewidth}{0pt}
+
+\fancypagestyle{plain}{%
+  \fancyhf{}%
+  \fancyfoot[C]{$-$ \thepage\  $-$}%
+  \renewcommand{\headrulewidth}{0pt}%
+  \renewcommand{\footrulewidth}{0pt}%
+}
+
+
+% ============================================================
+% BOXES
+%   \begin{summarybox} ... \end{summarybox}   (also: mainidea)
+% ============================================================
+
+\newenvironment{summarybox}{%
+  \closestatement
+  \begin{tcolorbox}[
+    enhanced, breakable,
+    colback=white, colframe=black,
+    boxrule=0.5pt, arc=0pt, outer arc=0pt,
+    left=9pt, right=9pt, top=7pt, bottom=7pt,
+    before skip=\baselineskip,
+    after skip=\baselineskip,
+    fontupper=\normalfont
+  ]%
+}{%
+  \end{tcolorbox}%
+}
+\newenvironment{mainidea}{\begin{summarybox}}{\end{summarybox}}
+
+
+% ============================================================
+% FIGURES AND TABLES
+% ============================================================
+
+\DeclareCaptionFormat{custom}{\small{#1#2}\justifying #3}
+\captionsetup[figure]{format=custom, name=FIG., labelsep=period}
+\captionsetup[table]{format=custom, name=TAB., labelsep=period}
+
+
+% ============================================================
+% YOUR OWN MACROS BELOW
+% ============================================================
