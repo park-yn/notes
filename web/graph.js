@@ -152,7 +152,7 @@ function start(graph, map) {
   });
 
   // ---------------------------------------------------------------- roads
-  const ROAD_COLOR = "#b4b4b4", ROAD_WIDTH = 2;
+  const ROAD_COLOR = "#b4b4b4", ROAD_WIDTH = 1.2;
   // region labels: black text, 1.15 x the node font size
   const LABEL_COLOR = "#000000", LABEL_SIZE = 18 * 1.15, LABEL_FONT = `${LABEL_SIZE}px arial`;
   let editing = null;      // label whose text is being typed
