@@ -5,6 +5,7 @@
 //
 // Keys:  E = enter/leave edit mode.  In road mode: click to add points,
 //        double-click or Enter to finish, Backspace = undo point, Esc = cancel.
+//        In link mode: click one node, then another, to join them (Esc cancels).
 //        In label mode: click empty space to write a label, click a label to
 //        change its text (empty text deletes it), drag a label to move it.
 
@@ -37,7 +38,8 @@ Promise.all([loadJSON("graph.json"), loadJSON("map.json")]).then(([graph, publis
   // use whichever map is newer: the published one, or one saved from this browser
   let map = local && local.savedAt > (published.savedAt || "") ? local : published;
   map = { savedAt: map.savedAt || "", nodes: { ...map.nodes }, roads: [...(map.roads || [])],
-          labels: (map.labels || []).map(l => ({ ...l })) };
+          labels: (map.labels || []).map(l => ({ ...l })),
+          links: (map.links || []).map(l => [...l]) };
   start(graph, map);
 });
 
@@ -75,8 +77,9 @@ function start(graph, map) {
   // ---------------------------------------------------------------- placing new nodes
   // next to its \near node, else next to something it's linked to,
   // else in a column to the right of everything ("inbox") until you place it
-  const linked = {};
-  graph.edges.forEach(e => {
+  const linked = {};      // neighbours along lines, in both directions
+  const allLinks = [...graph.edges, ...map.links.map(([from, to]) => ({ from, to }))];
+  allLinks.forEach(e => {
     (linked[e.to] = linked[e.to] || []).push(e.from);
     (linked[e.from] = linked[e.from] || []).push(e.to);
   });
@@ -113,7 +116,15 @@ function start(graph, map) {
          : n.failed ? { border: "#dd3333" } : undefined,
     font: { color: n.ghost ? "#777777" : "#000000" }
   })));
-  const edges = new vis.DataSet(graph.edges.map(e => ({ from: e.from, to: e.to })));
+  // lines: from \uses in the documents, plus links drawn on the map (ids start with "m:")
+  const ids = new Set(graph.nodes.map(n => n.id));
+  const pairKey = (a, b) => [a, b].sort().join("|");
+  const usesPairs = new Set(graph.edges.map(e => pairKey(e.from, e.to)));
+  map.links = map.links.filter(([a, b]) => ids.has(a) && ids.has(b) && !usesPairs.has(pairKey(a, b)));
+  const edges = new vis.DataSet([
+    ...graph.edges.map(e => ({ id: "u:" + pairKey(e.from, e.to), from: e.from, to: e.to })),
+    ...map.links.map(([a, b]) => ({ id: "m:" + pairKey(a, b), from: a, to: b }))
+  ]);
 
   const container = document.getElementById("network");
   const network = new vis.Network(container, { nodes, edges }, {
@@ -141,20 +152,37 @@ function start(graph, map) {
   });
 
   // ---------------------------------------------------------------- roads
-  const ROAD_COLOR = "#b4b4b4", ROAD_WIDTH = 3;
-  // region labels: small grey text, same colour as the roads
-  const LABEL_COLOR = "#a0a0a0", LABEL_SIZE = 16, LABEL_FONT = `${LABEL_SIZE}px arial`;
+  const ROAD_COLOR = "#b4b4b4", ROAD_WIDTH = 2;
+  // region labels: black text, 1.15 x the node font size
+  const LABEL_COLOR = "#000000", LABEL_SIZE = 18 * 1.15, LABEL_FONT = `${LABEL_SIZE}px arial`;
   let editing = null;      // label whose text is being typed
+  let linkFrom = null;     // first node chosen in link mode
   let draft = null;        // road being drawn: list of [x, y]
   let cursor = null;       // mouse position while drawing
 
+  // Roads are smooth curves through the clicked points (centripetal Catmull-Rom:
+  // no loops or sharp kinks, even when points are unevenly spaced).
+  function segments(pts) {
+    const out = [];
+    const n = pts.length;
+    const at = i => i < 0 ? [2 * pts[0][0] - pts[1][0], 2 * pts[0][1] - pts[1][1]]
+                  : i >= n ? [2 * pts[n - 1][0] - pts[n - 2][0], 2 * pts[n - 1][1] - pts[n - 2][1]]
+                  : pts[i];
+    for (let i = 0; i < n - 1; i++) {
+      const p0 = at(i - 1), p1 = at(i), p2 = at(i + 1), p3 = at(i + 2);
+      const d = (a, b) => Math.max(Math.sqrt(Math.hypot(b[0] - a[0], b[1] - a[1])), 1e-3);
+      const d1 = d(p0, p1), d2 = d(p1, p2), d3 = d(p2, p3);
+      const c1 = [0, 1].map(k => (d1 * d1 * p2[k] - d2 * d2 * p0[k] + (2 * d1 * d1 + 3 * d1 * d2 + d2 * d2) * p1[k])
+                                 / (3 * d1 * (d1 + d2)));
+      const c2 = [0, 1].map(k => (d3 * d3 * p1[k] - d2 * d2 * p3[k] + (2 * d3 * d3 + 3 * d3 * d2 + d2 * d2) * p2[k])
+                                 / (3 * d3 * (d3 + d2)));
+      out.push([p1, c1, c2, p2]);
+    }
+    return out;
+  }
   function trace(ctx, pts) {
     ctx.moveTo(pts[0][0], pts[0][1]);
-    for (let i = 0; i < pts.length - 1; i++) {
-      const p0 = pts[i - 1] || pts[i], p1 = pts[i], p2 = pts[i + 1], p3 = pts[i + 2] || p2;
-      ctx.bezierCurveTo(p1[0] + (p2[0] - p0[0]) / 6, p1[1] + (p2[1] - p0[1]) / 6,
-                        p2[0] - (p3[0] - p1[0]) / 6, p2[1] - (p3[1] - p1[1]) / 6, p2[0], p2[1]);
-    }
+    for (const [, c1, c2, p2] of segments(pts)) ctx.bezierCurveTo(c1[0], c1[1], c2[0], c2[1], p2[0], p2[1]);
   }
   network.on("beforeDrawing", ctx => {
     ctx.save();
@@ -181,16 +209,20 @@ function start(graph, map) {
         ctx.beginPath(); trace(ctx, pts); ctx.stroke();
       }
     }
+    if (linkFrom && cursor) {
+      const a = network.getPositions([linkFrom])[linkFrom];
+      ctx.strokeStyle = "#2e81ff";
+      ctx.lineWidth = 1;
+      ctx.setLineDash([6, 5]);
+      ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(cursor[0], cursor[1]); ctx.stroke();
+    }
     ctx.restore();
   });
 
   // distance from a point to a road (for the eraser)
   function distanceToRoad(p, road) {
     let best = Infinity;
-    for (let i = 0; i < road.length - 1; i++) {
-      const p0 = road[i - 1] || road[i], p1 = road[i], p2 = road[i + 1], p3 = road[i + 2] || p2;
-      const c1 = [p1[0] + (p2[0] - p0[0]) / 6, p1[1] + (p2[1] - p0[1]) / 6];
-      const c2 = [p2[0] - (p3[0] - p1[0]) / 6, p2[1] - (p3[1] - p1[1]) / 6];
+    for (const [p1, c1, c2, p2] of segments(road)) {
       for (let t = 0; t <= 1; t += 0.05) {
         const u = 1 - t;
         const x = u*u*u*p1[0] + 3*u*u*t*c1[0] + 3*u*t*t*c2[0] + t*t*t*p2[0];
@@ -215,15 +247,17 @@ function start(graph, map) {
   }
   function setMode(m) {
     if (draft) finishRoad();
+    cancelLink();
     if (editing) labelInput.blur();
     mode = m;
     toolbar.style.display = mode === "view" ? "none" : "flex";
     toolbar.querySelectorAll("[data-mode]").forEach(b => b.classList.toggle("on", b.dataset.mode === mode));
     network.setOptions({ interaction: { dragNodes: mode === "move" } });
-    container.style.cursor = mode === "road" ? "crosshair" : mode === "erase" ? "pointer"
+    container.style.cursor = mode === "road" || mode === "link" ? "crosshair" : mode === "erase" ? "pointer"
                            : mode === "label" ? "text" : "";
     if (mode === "road") say("Click to add points · double-click or Enter to finish · Backspace undoes a point", 5000);
-    if (mode === "erase") say("Click a road or a label to delete it", 3000);
+    if (mode === "erase") say("Click a road, a label or a drawn link to delete it", 3000);
+    if (mode === "link") say("Click a node, then another node, to link them", 4000);
     if (mode === "label") say("Click empty space to write a label · click a label to change it · drag to move", 5000);
   }
   function changed() {
@@ -247,6 +281,7 @@ function start(graph, map) {
   document.addEventListener("keydown", e => {
     if (e.target === search || e.target === labelInput) return;
     if (e.key === "e" || e.key === "E") { setMode(mode === "view" ? "move" : "view"); return; }
+    if (mode === "link" && e.key === "Escape") { cancelLink(); return; }
     if (mode !== "road" || !draft) return;
     if (e.key === "Enter") finishRoad();
     if (e.key === "Escape") { draft = null; cursor = null; network.redraw(); }
@@ -271,9 +306,37 @@ function start(graph, map) {
       }
       network.redraw();
     }
+    if (mode === "link") {
+      if (!params.nodes.length) { cancelLink(); return; }
+      const id = params.nodes[0];
+      if (!linkFrom) { linkFrom = id; network.selectNodes([id]); return; }
+      if (id !== linkFrom) {
+        const key = pairKey(linkFrom, id);
+        if (edges.get("u:" + key)) say("Already linked by a \\uses line", 2500);
+        else if (!edges.get("m:" + key)) {
+          edges.add({ id: "m:" + key, from: linkFrom, to: id });
+          map.links.push([linkFrom, id]);
+          changed();
+        }
+      }
+      cancelLink();
+      return;
+    }
     if (mode === "erase") {
       const hit = labelAt(p);
       if (hit) { map.labels.splice(map.labels.indexOf(hit), 1); changed(); network.redraw(); return; }
+      if (!params.nodes.length && params.edges.length) {
+        const id = params.edges[0];
+        if (id.startsWith("m:")) {
+          edges.remove(id);
+          const key = id.slice(2);
+          map.links = map.links.filter(([a, b]) => pairKey(a, b) !== key);
+          changed();
+        } else {
+          say("This line comes from a \\uses line in a document; delete it there", 4000);
+        }
+        return;
+      }
       const reach = 12 / network.getScale();
       let best = -1, bestD = reach;
       map.roads.forEach((road, i) => {
@@ -285,8 +348,15 @@ function start(graph, map) {
   });
   network.on("doubleClick", () => { if (mode === "road") finishRoad(); });
 
+  function cancelLink() {
+    if (!linkFrom) return;
+    linkFrom = null; cursor = null;
+    network.unselectAll();
+    network.redraw();
+  }
+
   container.addEventListener("mousemove", e => {
-    if (mode !== "road" || !draft) return;
+    if (!(mode === "road" && draft) && !(mode === "link" && linkFrom)) return;
     const r = container.getBoundingClientRect();
     const c = network.DOMtoCanvas({ x: e.clientX - r.left, y: e.clientY - r.top });
     cursor = [c.x, c.y];
@@ -406,12 +476,14 @@ function start(graph, map) {
     const ids = Object.keys(p).sort();
     const lines = ids.map(id => `    ${JSON.stringify(id)}: [${Math.round(p[id].x)}, ${Math.round(p[id].y)}]`);
     const roads = map.roads.map(r => "    " + JSON.stringify(r));
+    const links = map.links.map(l => "    " + JSON.stringify(l));
     const labels = map.labels.map(l =>
       `    {"text": ${JSON.stringify(l.text)}, "x": ${Math.round(l.x)}, "y": ${Math.round(l.y)}}`);
     return "{\n" +
       `  "savedAt": ${JSON.stringify(map.savedAt)},\n` +
       `  "nodes": {\n${lines.join(",\n")}\n  },\n` +
       `  "roads": [\n${roads.join(",\n")}\n  ],\n` +
+      `  "links": [\n${links.join(",\n")}\n  ],\n` +
       `  "labels": [\n${labels.join(",\n")}\n  ]\n}\n`;
   }
 
