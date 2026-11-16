@@ -1,0 +1,100 @@
+\smalldoc{The Coleman-Mandula theorem}{CM thm}
+
+
+The Coleman-Mandula theorem 
+concludes that the only possible Lie algebra that generates symmetries of the $S$ matrix is locally isomorphic
+to a direct sum, where one of the summands is the Poincaré algebra. The theorem basically shows that
+spacetime symmetries do not mix with “internal” ones. (However, if we relax
+the condition that the symmetry algebra be an ordinary Lie algebra, this allows for more possibilities: namely, supersymmetry.)
+
+ Whatever the quantum field theory at hand is, it has a Hilbert space that looks like $\mathcal{H} := \mathcal{H}^{(1)} \oplus \mathcal{H}^{(2)}\oplus \dots$, where $\mathcal{H}^{(n)}$ is the Hilbert subspace describing the possible states occupied by $n$-particles, with  $\mathcal{H}^{(n)}\simeq  \bigotimes^n_{i=1} \mathcal{H}^{(1)}$.
+   The \textit{$S$ matrix} is a unitary (probability-preserving) operator $S: \mathcal{H}\to\mathcal{H}$ which acts on asymptotically-free input states (called \textit{in-states}) and gives asymptotically-free output states (called \textit{out-states}). In other words, if you feed the $S$ matrix some particles in a scattering experiment, it gives you the probability of what happens after the interaction (scattering) takes place.  
+
+A \textit{symmetry group} $G$ of $S$ is a group such that its infinitesimal transformations (generators) are unitary operators $U:\mathcal{H}\to\mathcal{H}$ which do not mix the fixed-particle subspaces and which commute  with $S$. If the Poincar\'e group $P$ is a symmetry group of $S$, then we say    the theory is \textit{Lorentz-invariant}. In this case the asymptotic one-particle states are classified by the irreducible representations of $P$, so we label the states like   $\ket{\alpha,\lambda,p}$, where $p$ is on-shell momentum, $\lambda$ is spin/helicity, and $\alpha$ is any additional discrete particle labels.  An \textit{internal symmetry} of $S$ is one that commutes with $P$.  Of course, we can extract the scattering part of the $S$ matrix by subtracting off the identity; we write $S = 1 - i(2\pi)^4 \delta(P_\mu - P_\mu') T$, where the elements of $T$ are the scattering amplitudes. Now we are ready to state the theorem: 
+
+\begin{theorem}
+     Let $G$ be a connected symmetry group for the $S$-matrix and assume the following five conditions: \begin{enumerate}[\bfseries 1.]
+    \item (Lorentz invariance)  $G$ contains a subgroup locally isomorphic to $  P$. 
+    \item (Particle-finiteness)  All particle types correspond to positive-energy reps of $P$. For any $\varepsilon>0$, there are only finitely-many particles with mass $0 < m< \varepsilon$. 
+    \item (Weak elastic analyticity)  Elastic scattering amplitudes are analytic functions of center-of-mass energy $s$ and momentum transfer $t$ in some neighbourhood of the physical region, except at normal thresholds (in other words, almost everywhere). 
+    \item (Occurrence of scattering)  Let $\ket{p}$ and $\ket{p'}$ be 1-particle momentum states and let $\ket{p,p'}$ be built from these. Then $T\ket{p,p'}\neq 0$ almost everywhere.
+    \item (Ugly technical assumption)   $G$ has well-defined infinitesimal generators on 1-particle states, in the sense that for every  one-parameter subgroup $g(t)\subset G$ with $g(0) = e$, the derivative  $$ \frac{d}{dt}\Bigg|_{t=0}\braket{x,g(t) y}    $$ exists and is expressable as  $ \frac{d}{dt}\Big|_{t=0}\braket{x,g(t) y}  := i\braket{x,Ay}$ for some distribution $A$. (For example, $g(t) = e^{it A}$, but this is stronger than necessary).
+\end{enumerate} \textit{Then}, $G$ is locally isomorphic to $P$ times an internal symmetry group, or equivalently  $\mathfrak{g}\simeq\mathfrak{p}\oplus \mathfrak{internal}$ locally (where $\mathfrak{internal}$ denotes the Lie algebra of the internal symmetry group).  
+ \end{theorem} 
+
+ \begin{proof}
+     We will  show that $A$ is the sum   of an infinitesimal
+Lorentz transformation, an infinitesimal translation,
+and an infinitesimal internal symmetry transformation.  For simplicity denote $A(p',p) := \braket{\alpha',\lambda',p'|A|\alpha,\lambda,p}$  (suppressing the spin and particle type indices). For two-particle states, $A$ readily extends to \begin{align}
+    A(p',p,q',q) = A(p',p) \otimes \delta(q' - q)\mathbbm{1} +  \delta(p' - p)\mathbbm{1}\otimes A(q',q) 
+\end{align} where $\mathbbm{1}$ denotes the identity with respect to the suppressed indices. We do the proof in multiple steps. 
+\vspace{3pt}
+
+
+\noindent\textbf{Step 1.} \textit{Show that $A(p',p)$ vanishes everywhere except when $p' = p$; in other words, $A$ has no matrix elements between different 4-momenta.}
+\vspace{2pt}
+
+
+To this end, we define a momentum projection $A_f:= \int d^4a e^{i p \cdot a}Ae^{-ip\cdot a} \tilde{f}(a)$, where $f$ is an arbitrary test function with support in some region $R$, and $\tilde{f}$ is its Fourier transform. The distribution $A_f$ is still a generator of $\mathfrak{g}$ since it is just modified by weighted translations. Computing the matrix elements, one easily obtains that $A_f(p',p) = f(p' - p)A(p',p)$, which means that $A_f$ is only supported in the region where the difference $p' - p$ remains inside $R$.   This is significant: because of the particle-finiteness assumption, the one-particle state momenta are only supported on a set of countable mass hyperboloids; i.e. $p^2 = m^2_i$, with at most $i \in \mathbb{Z}$. This means that, for fixed $r\in R$, the system of two equations  $p^2 = m_i^2$  and $(p + r)^2 = m_j^2$ describes a slice of a mass hyperboloid, and varying $r$ by a small amount turns this slice into a thin band $L$. By definition, everything outside the band but within the hyperboloid is annihilated by $A_f$. So if $R$ is small enough, then for any $p\in L$ and any $r\in R$, $p + r$ takes us outside the band and hence the corresponding state is annihilated by $A_f$. 
+
+First we will consider the lowest mass hyperboloid. Let $p \in L$ and $q,p',q'\notin L$ but still within the hyperboloid, such that $p + q  = p' + q'$. Further suppose that $s = (p + q)^2$ is small enough so that we are not taken to the next hyperboloid (in other words, the energy involved is not large enough to produce a   pair of particles of the next type). Since $A_f$ is a generator of $\mathfrak{g}$, it commutes with $S$, so we have \begin{align}
+    \bra{p',q'} S\Big(A_f\ket{p}\otimes \ket{q} + \ket{p}\otimes A_f\ket{q}\Big) = \Big( \bra{p'}A_f\otimes \bra{q'} +  \bra{p'}\otimes \bra{q'}A_f\Big)S\ket{p,q},
+\end{align} but only $A_f\ket{p}\neq 0$ so we obtain $ \bra{p',q'} S\big(A_f\ket{p}\otimes \ket{q} \big) = 0$. But then this can only happen if $S =0$, which is possible for some values of $s$ and $t = (p - p')^2$. However,  because we can move $q,p',q'$ around by rotating them, we actually obtain that $S = 0$ for a continuous range of $s$ and $t$, which by analyticity implies $S \equiv 0$ for scattering on this hyperboloid. This contradicts our assumption and thus $A_f = 0$ for this hyperboloid. Applying the same argument to the rest of the hyperboloids gives that $A_f = 0$ everywhere, and since $f$ was arbitrary except that it had support away from zero, we conclude that $A$ must have support nowhere except at $ p = p'$, as desired.
+
+\vspace{3pt}
+\noindent \textbf{Step 2.} \textit{Rewrite $A(p',p)$ as a distribution in the  momentum variables.} 
+\vspace{2pt} 
+
+
+
+The technical assumption means that $A$ is a distribution, and from the previous step we can therefore write it as a finite sum of derivatives of  $\delta(p' - p)$: \begin{align}
+    A^{(N)}(p',p)=  \sum_{n = 0}^N A^{(n)}_{\mu_1\dots\mu_n}(p) \frac{\partial}{\partial p_{\mu_1}}\dots \frac{\partial}{\partial p_{\mu_n}} \delta( p' - p).
+\end{align} We also have (using simple delta manipulations) \begin{align}\label{AAA}
+     A^{(N)}_{\mu_1\dots\mu_n}(p) \delta( p' - p) = \frac{1}{N!}\braket{p'|\Big[P_{\mu_1},\big[P_{\mu_2},\dots [P_{\mu_n},A^{(N)}]\big]\Big]|p},
+\end{align}  which contains no derivatives of delta functions, hence it is a generator for $N = 0$ representations. We also have the condition  $    [A^{(N)}, P^\mu P_\mu]  = 0 $ which enforces that the momenta are on-shell (the derivatives can only be taken tangent to the hyperboloid $p^2 = m^2$). 
+
+\vspace{3pt}
+\noindent\textbf{Step 3.} \textit{Isolate the $N = 0$ representations.}
+\vspace{2pt}
+
+Look at the case $N = 0$, i.e. $A^{(N)}(p',p)  = A^{(0)}(p)\delta(p'- p)$. Also writing $ \braket{p',q'|S |p,q} = \delta( p + q - p' - q')S(p,q,p',q') $ (still suppressing non-momentum indices) , then the relation $\braket{p',q'|SA^{(0)}|p,q} = \braket{p',q'|A^{(0)}S|p,q}$ becomes \begin{align}
+    S(p,q,p',q') \underbrace{\Big(A^{(0)}(p)\otimes I(q) + I(p)\otimes A^{(0)} (q)\Big)}_{A_{\text{in}}} =  \underbrace{\Big(A^{(0)}(p')\otimes I(q') + I(p')\otimes A^{(0)} (q')\Big)}_{A_{\text{out}}}S(p,q,p',q') ,
+\end{align} where $I$ denotes the identity with respect to non-momentum indices at the given momentum. Since $S$ is unitary, then $A_{\text{out}} = SA_{\text{in}}S^{-1} $ is a similarity transformation, giving that $A_{\text{out}}$ and $A_{\text{in}}$ have the same trace. If we denote $N(m_p) := \operatorname{tr}I(p)$, which is the number of particles in the state with momentum $p$ (finite by assumption), then \begin{align}
+    \frac{\operatorname{tr} A^{(0)}(p')}{N(m_{p})} +  \frac{\operatorname{tr} A^{(0)}(q')}{N(m_{q})} =  \frac{\operatorname{tr} A^{(0)}(p)}{N(m_{p})}  +  \frac{\operatorname{tr} A^{(0)}(q)}{N(m_{q})} .
+\end{align} The only constraint we have is $p + q = p' + q'$, so the above is solved only with $\operatorname{tr} A^{(0)}(p) = (a_\mu p^\mu + b) N(m_p)$, where $a_\mu$ and $b$ are independent of momenta, spin and particle type indices. It follows that  \begin{align}
+    A^{(0)} = a_\mu P^\mu + b I + B
+\end{align} where $B$ is a traceless $N = 0$ generator. 
+
+
+\vspace{3pt}
+\noindent\textbf{Step 4.} \textit{Show that such $B$ only generates internal symmetries.}
+\vspace{2pt}
+
+First observe that such $B$'s yield traceless commutators, so they for their own subalgebra. Pick a basis of them $B_\alpha$ and write $[B_\alpha,B_\beta ] = i C^{\gamma}_{\alpha\beta}B_\gamma$ for some (real) structure constants $C^{\gamma}_{\alpha\beta}$. Let $\Lambda$ be a Lorentz transformation and $U(\Lambda)$ be the corresponding unitary operator. Since conjugation by $U(\Lambda)$ commutes with momentum and preserves the symmetry algebra, we have that $U(\Lambda) B_\alpha U^\dagger(\Lambda)$ is still in the $B$ subalgebra, so we can write $U(\Lambda) B_\alpha U^\dagger(\Lambda) = D^{\alpha'}_{\alpha }(\Lambda) B_{\alpha'}$ for some matrices $ D^{\alpha'}_{\alpha }(\Lambda)$. Since they preserve the commutator we have $C^\gamma_{\alpha\beta} =  D^{\alpha'}_{\alpha}(\Lambda) D^{\beta'}_{\beta}(\Lambda) D^{\gamma}_{\gamma'}(\Lambda^{-1})C^{\gamma'}_{\alpha'\beta'}$, and a similar relation follows for the Lie algebra metric $g_{\alpha\beta}:= C^\gamma_{\alpha\delta}C^\delta_{\gamma\beta}$,  \begin{align}\label{gggg}g_{\alpha\beta} =  D^{\alpha'}_{\alpha}(\Lambda) D^{\beta'}_{\beta}(\Lambda)  g_{\alpha'\beta'}.\end{align} If the subalgebra were to contain momentum generators, since $[B_\alpha,P^\mu] = 0$ we have that the structure constants with momentum indices must vanish, and the metric becomes block-diagonal with only a non-vanishing block $g_{\alpha\beta}$ where the indices are non-momentum. This matrix $g$ is positive-definite and symmetric, so we can write the above condition \eqref{gggg} as \begin{align}
+    \left(g^{-1/2}D g\right)  \left(g^{-1/2}D g\right)^\top = 1.
+\end{align} This shows that, after a change of basis, $D(\Lambda)$ is orthogonal (unitary), but the only finite-dimensional unitary representations of the Lorentz group are trivial, hence $D(\Lambda) = 1$. This implies that the subalgebra of $B$'s cannot contain momentum indices, and moreover it cannot contain spin indices since the subalgebra commutes with rotations and hence cannot effectuate changes of spin. Thus the $B$'s can only change particle type (``internal'') indices. 
+
+
+
+\vspace{3pt}
+\noindent\textbf{Step 5.} \textit{Show that there are no generators with $N > 1$.}
+\vspace{2pt}
+
+Recall \eqref{AAA}, which is an $N =0$ generator. From Step 3 we can write its trace excluding the delta function as \begin{align}
+    \operatorname{tr} A^{(N)}_{\mu_1\dots\mu_n}(p) = a_{\nu\mu_1\dots \mu_N} p^\nu + b_{\mu_1\dots\mu_N},
+\end{align} where $a_{\nu\mu_1\dots \mu_N}$ and $b_{\mu_1\dots\mu_N}$ are symmetric in the $\mu_i$ indices. Now consider $ \big[P_{\mu_2},\dots [P_{\mu_N},A^{(N)}]\big] $, which is still an element of the symmetry algebra, and commute it with $P^\lambda P_\lambda$ and take the trace: it must vanish, so we have  \begin{align}
+    0 &= \frac{1}{N!}\operatorname{tr} \braket{p'|\Big[P^\lambda P_{\lambda},\big[P_{\mu_2},\dots [P_{\mu_N},A^{(N)}]\big]\Big]|p} = 2p^\lambda \big(a_{\nu\lambda\mu_2\dots \mu_N} p^\nu + b_{\lambda\mu_2\dots\mu_N}\big) \delta(p' - p).
+\end{align} This must hold for all $p$ so we get that $b_{\lambda\mu_2\dots\mu_N} = 0$ and $a_{\nu\lambda\mu_2\dots \mu_N}$ is antisymmetric in its first two indices, which by symmetry of $a$ only leaves $a = 0$. This argument relies on there being at least three indices for $a$, hence this holds for all $N > 1$ generators. 
+
+
+\vspace{3pt}
+\noindent\textbf{Step 6.} \textit{Identify the Poincar\'e  and internal parts of the  $N = 1$ generators.}
+\vspace{2pt}
+
+
+For the case $N = 1$ we have \begin{align}\label{refrjeiahf}
+       A^{(1)} (p,p') = \Big((a_{\nu\mu } p^\nu + b_{\mu }) \frac{\partial}{\partial p_\mu} +  (\text{$N = 0$ part})\Big)\delta(p' - p),
+\end{align} and from the previous step we conclude  $a_{\nu\mu}$ is antisymmetric and $b_\mu $ vanishes. Then the term containing the derivative is just the momentum part of a Lorentz generator. What about the spin part? If we subtract off $a_{\nu\mu}M^{\nu\mu}$ from \eqref{refrjeiahf}, the derivative part cancels and we obtain an $N = 0$ generator. From steps 3 and 4 we conclude that this result must be the sum of a translation and an internal symmetry. 
+
+\textit{Thus}, any $A$ is the sum of a Poincar\'e generator and a generator of internal symmetry, completing the proof.
+ \end{proof}
