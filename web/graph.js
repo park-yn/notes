@@ -5,6 +5,8 @@
 //
 // Keys:  E = enter/leave edit mode.  In road mode: click to add points,
 //        double-click or Enter to finish, Backspace = undo point, Esc = cancel.
+//        In label mode: click empty space to write a label, click a label to
+//        change its text (empty text deletes it), drag a label to move it.
 
 const FONT = "18px arial";
 const MAP_KEY = "physicsweb-map";      // unsaved/just-saved map kept in this browser
@@ -34,7 +36,8 @@ Promise.all([loadJSON("graph.json"), loadJSON("map.json")]).then(([graph, publis
   published = published || empty;
   // use whichever map is newer: the published one, or one saved from this browser
   let map = local && local.savedAt > (published.savedAt || "") ? local : published;
-  map = { savedAt: map.savedAt || "", nodes: { ...map.nodes }, roads: [...(map.roads || [])] };
+  map = { savedAt: map.savedAt || "", nodes: { ...map.nodes }, roads: [...(map.roads || [])],
+          labels: (map.labels || []).map(l => ({ ...l })) };
   start(graph, map);
 });
 
@@ -139,6 +142,9 @@ function start(graph, map) {
 
   // ---------------------------------------------------------------- roads
   const ROAD_COLOR = "#b4b4b4", ROAD_WIDTH = 3;
+  // region labels: small grey text, same colour as the roads
+  const LABEL_COLOR = "#a0a0a0", LABEL_SIZE = 16, LABEL_FONT = `${LABEL_SIZE}px arial`;
+  let editing = null;      // label whose text is being typed
   let draft = null;        // road being drawn: list of [x, y]
   let cursor = null;       // mouse position while drawing
 
@@ -159,6 +165,14 @@ function start(graph, map) {
     for (const road of map.roads) {
       if (road.length < 2) continue;
       ctx.beginPath(); trace(ctx, road); ctx.stroke();
+    }
+    ctx.fillStyle = LABEL_COLOR;
+    ctx.font = LABEL_FONT;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    for (const l of map.labels) {
+      if (l === editing) continue;
+      ctx.fillText(l.text, l.x, l.y);
     }
     if (draft && draft.length) {
       const pts = cursor ? [...draft, cursor] : draft;
@@ -201,13 +215,16 @@ function start(graph, map) {
   }
   function setMode(m) {
     if (draft) finishRoad();
+    if (editing) labelInput.blur();
     mode = m;
     toolbar.style.display = mode === "view" ? "none" : "flex";
     toolbar.querySelectorAll("[data-mode]").forEach(b => b.classList.toggle("on", b.dataset.mode === mode));
     network.setOptions({ interaction: { dragNodes: mode === "move" } });
-    container.style.cursor = mode === "road" ? "crosshair" : mode === "erase" ? "pointer" : "";
+    container.style.cursor = mode === "road" ? "crosshair" : mode === "erase" ? "pointer"
+                           : mode === "label" ? "text" : "";
     if (mode === "road") say("Click to add points · double-click or Enter to finish · Backspace undoes a point", 5000);
-    if (mode === "erase") say("Click a road to delete it", 3000);
+    if (mode === "erase") say("Click a road or a label to delete it", 3000);
+    if (mode === "label") say("Click empty space to write a label · click a label to change it · drag to move", 5000);
   }
   function changed() {
     dirty = true;
@@ -228,7 +245,7 @@ function start(graph, map) {
   });
 
   document.addEventListener("keydown", e => {
-    if (e.target === search) return;
+    if (e.target === search || e.target === labelInput) return;
     if (e.key === "e" || e.key === "E") { setMode(mode === "view" ? "move" : "view"); return; }
     if (mode !== "road" || !draft) return;
     if (e.key === "Enter") finishRoad();
@@ -255,6 +272,8 @@ function start(graph, map) {
       network.redraw();
     }
     if (mode === "erase") {
+      const hit = labelAt(p);
+      if (hit) { map.labels.splice(map.labels.indexOf(hit), 1); changed(); network.redraw(); return; }
       const reach = 12 / network.getScale();
       let best = -1, bestD = reach;
       map.roads.forEach((road, i) => {
@@ -272,6 +291,98 @@ function start(graph, map) {
     const c = network.DOMtoCanvas({ x: e.clientX - r.left, y: e.clientY - r.top });
     cursor = [c.x, c.y];
     network.redraw();
+  });
+
+  // ---------------------------------------------------------------- labels
+  measure.font = LABEL_FONT;
+  function labelAt(p) {
+    measure.font = LABEL_FONT;
+    const pad = 6 / network.getScale();
+    for (let i = map.labels.length - 1; i >= 0; i--) {
+      const l = map.labels[i];
+      const w = measure.measureText(l.text).width;
+      if (Math.abs(p.x - l.x) <= w / 2 + pad && Math.abs(p.y - l.y) <= LABEL_SIZE / 2 + pad) return l;
+    }
+    return null;
+  }
+  function canvasAt(e) {
+    const r = container.getBoundingClientRect();
+    return network.DOMtoCanvas({ x: e.clientX - r.left, y: e.clientY - r.top });
+  }
+
+  // typing box, placed over the label being written
+  const labelInput = document.createElement("input");
+  labelInput.id = "labelinput";
+  labelInput.autocomplete = "off";
+  labelInput.spellcheck = false;
+  document.body.appendChild(labelInput);
+
+  function startEditing(label) {
+    editing = label;
+    const scale = network.getScale();
+    const d = network.canvasToDOM({ x: label.x, y: label.y });
+    const r = container.getBoundingClientRect();
+    labelInput.style.fontSize = `${LABEL_SIZE * scale}px`;
+    labelInput.style.left = `${r.left + d.x}px`;
+    labelInput.style.top = `${r.top + d.y}px`;
+    labelInput.value = label.text;
+    labelInput.style.display = "block";
+    network.redraw();
+    setTimeout(() => { labelInput.focus(); labelInput.select(); }, 0);
+  }
+  function stopEditing(keep) {
+    if (!editing) return;
+    const label = editing, text = labelInput.value.trim();
+    editing = null;
+    labelInput.style.display = "none";
+    const isNew = !map.labels.includes(label);
+    if (keep && text) {
+      if (text !== label.text || isNew) { label.text = text; if (isNew) map.labels.push(label); changed(); }
+    } else if (keep && !text && !isNew) {
+      map.labels.splice(map.labels.indexOf(label), 1);
+      changed();
+    }
+    network.redraw();
+  }
+  labelInput.addEventListener("keydown", e => {
+    if (e.key === "Enter") { e.preventDefault(); labelInput.blur(); }
+    if (e.key === "Escape") { e.preventDefault(); stopEditing(false); }
+    e.stopPropagation();
+  });
+  labelInput.addEventListener("blur", () => stopEditing(true));
+
+  // drag a label (move and label modes); click to write or change one (label mode)
+  let press = null;
+  container.addEventListener("pointerdown", e => {
+    if ((mode !== "label" && mode !== "move") || editing) return;
+    const p = canvasAt(e);
+    const label = labelAt(p);
+    if (label) network.setOptions({ interaction: { dragView: false } });
+    press = { label, start: p, last: p, sx: e.clientX, sy: e.clientY, moved: false };
+  }, true);
+  window.addEventListener("pointermove", e => {
+    if (!press) return;
+    if (Math.hypot(e.clientX - press.sx, e.clientY - press.sy) > 4) press.moved = true;
+    if (!press.label || !press.moved) return;
+    const p = canvasAt(e);
+    press.label.x += p.x - press.last.x;
+    press.label.y += p.y - press.last.y;
+    press.last = p;
+    network.redraw();
+  });
+  window.addEventListener("pointerup", () => {
+    if (!press) return;
+    const { label, start, moved } = press;
+    press = null;
+    network.setOptions({ interaction: { dragView: true } });
+    if (label && moved) {
+      label.x = Math.round(label.x); label.y = Math.round(label.y);
+      changed();
+      return;
+    }
+    if (mode !== "label" || moved) return;
+    if (label) startEditing(label);
+    else startEditing({ text: "", x: Math.round(start.x), y: Math.round(start.y) });
   });
 
   // dropped node: keep it at least one node-height away from every other node
@@ -295,14 +406,18 @@ function start(graph, map) {
     const ids = Object.keys(p).sort();
     const lines = ids.map(id => `    ${JSON.stringify(id)}: [${Math.round(p[id].x)}, ${Math.round(p[id].y)}]`);
     const roads = map.roads.map(r => "    " + JSON.stringify(r));
+    const labels = map.labels.map(l =>
+      `    {"text": ${JSON.stringify(l.text)}, "x": ${Math.round(l.x)}, "y": ${Math.round(l.y)}}`);
     return "{\n" +
       `  "savedAt": ${JSON.stringify(map.savedAt)},\n` +
       `  "nodes": {\n${lines.join(",\n")}\n  },\n` +
-      `  "roads": [\n${roads.join(",\n")}\n  ]\n}\n`;
+      `  "roads": [\n${roads.join(",\n")}\n  ],\n` +
+      `  "labels": [\n${labels.join(",\n")}\n  ]\n}\n`;
   }
 
   async function save() {
     if (draft) finishRoad();
+    if (editing) labelInput.blur();
     map.savedAt = new Date().toISOString();
     const p = network.getPositions();
     map.nodes = {};
