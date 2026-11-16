@@ -76,3 +76,17 @@ body {
   transition: opacity 0.4s;
   pointer-events: none;
 }
+#labelinput {
+  display: none;
+  position: fixed;
+  z-index: 2;
+  transform: translate(-50%, -50%);
+  min-width: 120px;
+  padding: 0 4px;
+  font-family: arial, sans-serif;
+  color: #808080;
+  text-align: center;
+  background: #ffffff;
+  border: 1px solid #2e81ff;
+  outline: none;
+}
