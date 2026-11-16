@@ -117,7 +117,7 @@ def read_docs():
 def latexmk(texfile: Path, jobname: str, outdir: Path) -> bool:
     outdir.mkdir(parents=True, exist_ok=True)
     result = subprocess.run(
-        ["latexmk", "-pdf", "-interaction=nonstopmode", "-halt-on-error",
+        ["latexmk", "-xelatex", "-interaction=nonstopmode", "-halt-on-error",
          f"-jobname={jobname}", f"-outdir={outdir}", str(texfile)],
         cwd=ROOT, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
     )
